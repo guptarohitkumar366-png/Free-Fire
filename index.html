@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-
-  <meta name="google-site-verification"
-        content="Vg-gxzGCLniIx2yop2XUOWAJw-Oc5uqFj3m3h96AUTY" />
-
-  <title>Free Fire Tournament | Play & Win</title>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Free Fire Tournament</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 
@@ -223,16 +219,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // --- 1. FIREBASE CONFIG (PASTE YOURS HERE) ---
+        // --- 1. FIREBASE CONFIG (YOUR APP) ---
         const firebaseConfig = {
-  apiKey: "AIzaSyAcqUQoKE7r-Sn0M_qxmhOObookA3oFCqc",
-  authDomain: "free-fire-521c9.firebaseapp.com",
-  databaseURL: "https://free-fire-521c9-default-rtdb.firebaseio.com",
-  projectId: "free-fire-521c9",
-  storageBucket: "free-fire-521c9.firebasestorage.app",
-  messagingSenderId: "448484794398",
-  appId: "1:448484794398:web:424073810ecffb24188e0f"
-};
+            apiKey: "AIzaSyAcqUQoKE7r-Sn0M_qxmhOObookA3oFCqc",
+            authDomain: "free-fire-521c9.firebaseapp.com",
+            databaseURL: "https://free-fire-521c9-default-rtdb.firebaseio.com",
+            projectId: "free-fire-521c9",
+            storageBucket: "free-fire-521c9.firebasestorage.app",
+            messagingSenderId: "448484794398",
+            appId: "1:448484794398:web:424073810ecffb24188e0f"
+        };
         // ----------------------------------------------
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -297,10 +293,14 @@
             // Live Settings (Admin Controls)
             db.ref('settings').on('value', s => {
                 settings = s.val() || {};
+                
+                // Set Banner
                 if(settings.banner) { 
                     document.getElementById('home-banner').src = settings.banner; 
                     document.getElementById('home-banner').classList.remove('hidden'); 
                 }
+                
+                // Set UPI
                 document.getElementById('admin-upi-display').innerText = settings.upi_id || "Not Set";
                 
                 // Show QR Code if set
