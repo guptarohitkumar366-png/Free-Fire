@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FF Tournament</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- THEME --- */
+        :root {
+            --bg-dark: #0b0f14;
+            --bg-card: #151a21;
+            --bg-input: #1e252f;
+            --accent: #00ff88;
+            --danger: #ff4757;
+            --text-main: #ffffff;
+            --nav-height: 65px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Roboto', sans-serif;
+            padding-bottom: var(--nav-height);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .hidden { display: none !important; }
+        
+        /* UI ELEMENTS */
+        .btn {
+            border: none; padding: 12px; border-radius: 8px; font-weight: 600;
+            font-family: 'Poppins', sans-serif; width: 100%; margin-top: 10px;
+            cursor: pointer; text-transform: uppercase; font-size: 0.9rem;
+        }
+        .btn-primary { background: var(--accent); color: #000; box-shadow: 0 0 10px rgba(0, 255, 136, 0.2); }
+        .btn-outline { border: 1px solid var(--accent); background: transparent; color: var(--accent); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-sm { padding: 5px 10px; font-size: 0.8rem; width: auto; margin: 0; }
+
+        input, select {
+            width: 100%; padding: 14px; background: var(--bg-input);
+            border: 1px solid #333; border-radius: 8px; color: #fff;
+            margin-bottom: 10px; outline: none;
+        }
+        input:focus { border-color: var(--accent); }
+
+        /* HEADER */
+        header {
+            padding: 15px; background: rgba(21, 26, 33, 0.95);
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .wallet-pill {
+            background: #222; padding: 5px 12px; border-radius: 20px;
+            display: flex; align-items: center; gap: 8px; border: 1px solid #333;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-card); margin: 15px; padding: 15px;
+            border-radius: 12px; border: 1px solid #2a2a2a;
+        }
+        .app-banner {
+            width: calc(100% - 30px); margin: 15px; height: 160px;
+            border-radius: 12px; object-fit: cover; background: #222;
+            border: 1px solid #333;
+        }
+
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; height: var(--nav-height);
+            background: var(--bg-card); border-top: 1px solid #222;
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 900;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #888; font-size: 0.7rem; gap: 4px; background: none; border: none;
+        }
+        .nav-item.active { color: var(--accent); }
+        .nav-item i { font-size: 1.3rem; }
+
+        /* MODALS */
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            z-index: 2500; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: var(--bg-card); width: 90%; max-width: 400px;
+            padding: 20px; border-radius: 12px; border: 1px solid var(--accent);
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        /* TOAST */
+        #toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 10px 20px; border-radius: 30px;
+            z-index: 3000; opacity: 0; transition: 0.3s; pointer-events: none;
+            border: 1px solid var(--accent); white-space: nowrap;
+        }
+        #toast.show { opacity: 1; bottom: 90px; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen" style="position:fixed; inset:0; z-index:2000; background:var(--bg-dark); padding:30px; display:flex; flex-direction:column; justify-content:center;">
+        <h1 style="color:var(--accent);">LOGIN</h1>
+        <p style="color:#aaa; margin-bottom:20px;">Welcome Gamer!</p>
+        <input type="text" id="auth-user" placeholder="Username">
+        <input type="password" id="auth-pass" placeholder="Password">
+        <input type="number" id="auth-ff-uid" class="hidden" placeholder="Free Fire UID">
+        <button class="btn btn-primary" onclick="handleAuth()" id="auth-btn">LOGIN</button>
+        <p style="color:cyan; text-align:center; margin-top:15px; cursor:pointer;" onclick="toggleAuthMode()">
+            <span id="auth-toggle-text">New User? Register</span>
+        </p>
+    </div>
+
+    <div id="app" class="hidden">
+        <header>
+            <div style="font-weight:bold; font-family:'Poppins'; font-size:1.2rem;">FF APP</div>
+            <div class="wallet-pill" onclick="switchTab('wallet')">
+                <i class="fas fa-wallet" style="color:cyan"></i> <span id="header-bal">₹0</span>
+            </div>
+        </header>
+
+        <main>
+            <section id="tab-home">
+                <img id="home-banner" src="" class="app-banner hidden">
+                <div id="matches-list" style="padding-bottom:20px;">Loading...</div>
+            </section>
+
+            <section id="tab-my-matches" class="hidden">
+                <div id="my-matches-list" style="padding-top:15px;"></div>
+            </section>
+
+            <section id="tab-wallet" class="hidden">
+                <div class="card" style="background: linear-gradient(135deg, #00ff88, #00b894); color:#000; text-align:center; padding:30px;">
+                    <small>Total Balance</small>
+                    <h2 id="wallet-bal-big" style="font-size:2.5rem; margin:5px 0;">₹0</h2>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin:15px;">
+                    <button class="btn btn-primary" style="margin:0" onclick="openDepositModal()">ADD MONEY</button>
+                    <button class="btn btn-outline" style="margin:0" onclick="openWithdrawModal()">WITHDRAW</button>
+                </div>
+
+                <div class="card">
+                    <h4>History</h4>
+                    <div id="txn-list" style="margin-top:10px;">Loading...</div>
+                </div>
+            </section>
+
+            <section id="tab-profile" class="hidden">
+                <div style="text-align:center; padding:40px;">
+                    <div style="width:70px; height:70px; background:#333; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:1.5rem;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2 id="profile-name">User</h2>
+                    <p style="color:#aaa;" id="profile-uid">UID: --</p>
+                </div>
+                <div style="padding:20px;">
+                     <button class="btn btn-outline" onclick="openSupport()">Customer Support</button>
+                     <button class="btn btn-danger" onclick="logout()">LOGOUT</button>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('home')"><i class="fas fa-home"></i>Home</div>
+            <div class="nav-item" onclick="switchTab('my-matches')"><i class="fas fa-trophy"></i>Matches</div>
+            <div class="nav-item" onclick="switchTab('wallet')"><i class="fas fa-wallet"></i>Wallet</div>
+            <div class="nav-item" onclick="switchTab('profile')"><i class="fas fa-user"></i>Profile</div>
+        </nav>
+    </div>
+
+    <div id="deposit-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Money</h3>
+            <p style="color:#aaa; font-size:0.8rem; margin-bottom:10px;">Scan QR or Copy UPI ID to pay.</p>
+            
+            <img id="dep-qr-img" src="" class="hidden" style="width:160px; height:160px; object-fit:contain; border-radius:8px; border:2px solid var(--accent); margin:0 auto 15px; display:block; background:#fff;">
+
+            <div style="background:#222; padding:10px; margin-bottom:10px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
+                <span id="admin-upi-display" style="color:cyan; font-size:0.85rem; word-break:break-all;">Loading...</span>
+                <button class="btn btn-sm btn-outline" onclick="copyUPI()">COPY</button>
+            </div>
+            
+            <input type="number" id="dep-amt" placeholder="Amount">
+            <input type="text" id="dep-txn" placeholder="Transaction ID / UTR">
+            <p id="min-dep-txt" style="color:#666; font-size:0.7rem; text-align:right;">Min Deposit: ₹10</p>
+            
+            <button class="btn btn-primary" onclick="submitDeposit()">SUBMIT REQUEST</button>
+            <button class="btn btn-danger" onclick="closeModal('deposit-modal')">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="withdraw-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Withdraw</h3>
+            <input type="number" id="with-amt" placeholder="Amount">
+            <input type="text" id="with-num" placeholder="Paytm/UPI Number">
+            <select id="with-method"><option>UPI</option><option>Paytm</option></select>
+            <p id="min-with-txt" style="color:#666; font-size:0.7rem; text-align:right;">Min Withdraw: ₹50</p>
+            
+            <button class="btn btn-primary" onclick="submitWithdraw()">WITHDRAW</button>
+            <button class="btn btn-danger" onclick="closeModal('withdraw-modal')">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="toast">Msg</div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // --- 1. FIREBASE CONFIG (PASTE YOURS HERE) ---
+        const firebaseConfig = {
+  apiKey: "AIzaSyAcqUQoKE7r-Sn0M_qxmhOObookA3oFCqc",
+  authDomain: "free-fire-521c9.firebaseapp.com",
+  databaseURL: "https://free-fire-521c9-default-rtdb.firebaseio.com",
+  projectId: "free-fire-521c9",
+  storageBucket: "free-fire-521c9.firebasestorage.app",
+  messagingSenderId: "448484794398",
+  appId: "1:448484794398:web:424073810ecffb24188e0f"
+};
+        // ----------------------------------------------
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentUser = null;
+        let isRegistering = false;
+        let settings = {};
+
+        // SESSION CHECK
+        const sessionKey = localStorage.getItem('ff_user_key');
+        if(sessionKey) initUser(sessionKey);
+
+        // --- AUTH SYSTEM ---
+        function toggleAuthMode() {
+            isRegistering = !isRegistering;
+            document.getElementById('auth-btn').innerText = isRegistering ? "REGISTER" : "LOGIN";
+            document.getElementById('auth-toggle-text').innerText = isRegistering ? "Login" : "New User? Register";
+            document.getElementById('auth-ff-uid').classList.toggle('hidden');
+        }
+
+        function handleAuth() {
+            const u = document.getElementById('auth-user').value.trim();
+            const p = document.getElementById('auth-pass').value.trim();
+            if(!u || !p) return showToast("Empty fields");
+
+            if(isRegistering) {
+                const uid = document.getElementById('auth-ff-uid').value;
+                if(!uid) return showToast("Enter UID");
+                db.ref('users').orderByChild('username').equalTo(u).once('value', s => {
+                    if(s.exists()) return showToast("User exists");
+                    const ref = db.ref('users').push();
+                    ref.set({ username: u, password: p, ff_uid: uid, balance: 0 }).then(() => {
+                        localStorage.setItem('ff_user_key', ref.key);
+                        initUser(ref.key);
+                    });
+                });
+            } else {
+                db.ref('users').orderByChild('username').equalTo(u).once('value', s => {
+                    let found = false;
+                    s.forEach(c => { if(c.val().password===p) { found=true; localStorage.setItem('ff_user_key', c.key); initUser(c.key); }});
+                    if(!found) showToast("Wrong password");
+                });
+            }
+        }
+
+        function initUser(key) {
+            // Live User Data
+            db.ref('users/'+key).on('value', s => {
+                const d = s.val();
+                if(!d) { logout(); return; }
+                currentUser = { key: key, ...d };
+                document.getElementById('header-bal').innerText = `₹${d.balance}`;
+                document.getElementById('wallet-bal-big').innerText = `₹${d.balance}`;
+                document.getElementById('profile-name').innerText = d.username;
+                document.getElementById('profile-uid').innerText = d.ff_uid;
+                
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+            });
+            
+            // Live Settings (Admin Controls)
+            db.ref('settings').on('value', s => {
+                settings = s.val() || {};
+                if(settings.banner) { 
+                    document.getElementById('home-banner').src = settings.banner; 
+                    document.getElementById('home-banner').classList.remove('hidden'); 
+                }
+                document.getElementById('admin-upi-display').innerText = settings.upi_id || "Not Set";
+                
+                // Show QR Code if set
+                const qrImg = document.getElementById('dep-qr-img');
+                if(settings.qr_code) {
+                    qrImg.src = settings.qr_code;
+                    qrImg.classList.remove('hidden');
+                } else {
+                    qrImg.classList.add('hidden');
+                }
+                
+                // Set Limits Text
+                const minD = settings.min_deposit || 10;
+                const minW = settings.min_withdraw || 50;
+                document.getElementById('min-dep-txt').innerText = `Min Deposit: ₹${minD}`;
+                document.getElementById('min-with-txt').innerText = `Min Withdraw: ₹${minW}`;
+            });
+
+            loadMatches(); loadMyMatches(key); loadTxn(key);
+        }
+
+        function logout() { localStorage.removeItem('ff_user_key'); location.reload(); }
+
+        // --- MATCHES ---
+        function loadMatches() {
+            db.ref('tournaments').on('value', s => {
+                const list = document.getElementById('matches-list');
+                list.innerHTML = "";
+                const d = s.val() || {};
+                Object.keys(d).reverse().forEach(k => {
+                    const t = d[k];
+                    if(t.status === 'open') {
+                        const filled = t.joined || 0;
+                        const isJoined = t.players && t.players[currentUser.key];
+                        let btn = "";
+                        if(isJoined) btn = `<button class="btn" style="background:#333; cursor:default;">JOINED <i class="fas fa-check"></i></button>`;
+                        else if(filled>=t.slots) btn = `<button class="btn btn-danger" style="cursor:default;">FULL</button>`;
+                        else btn = `<button class="btn btn-primary" onclick="joinMatch('${k}', ${t.fee})">JOIN ₹${t.fee}</button>`;
+                        
+                        list.innerHTML += `
+                        <div class="card">
+                            <img src="${t.image_url}" class="app-banner" style="margin:0 0 10px 0; height:130px; width:100%;">
+                            <h4>${t.title} <span style="float:right; font-size:0.7rem; background:#333; padding:2px 8px; border-radius:4px;">${t.map}</span></h4>
+                            <p style="color:#aaa; font-size:0.8rem; margin:5px 0;">${t.date} ${t.time} | Slots: ${filled}/${t.slots}</p>
+                            <div style="background:#1e252f; padding:8px; border-radius:5px; display:flex; justify-content:space-between; font-size:0.8rem;">
+                                <span>Fee: <b style="color:var(--accent)">₹${t.fee}</b></span>
+                                <span>Prize: <b>₹${t.prize}</b></span>
+                                <span>Kill: <b>₹${t.per_kill}</b></span>
+                            </div>
+                            ${btn}
+                        </div>`;
+                    }
+                });
+            });
+        }
+
+        function joinMatch(tid, fee) {
+            if(currentUser.balance < fee) return showToast("Low Balance");
+            if(!confirm("Confirm Join?")) return;
+            db.ref('tournaments/'+tid).transaction(t => {
+                if(t) {
+                    if(t.players && t.players[currentUser.key]) return;
+                    if((t.joined||0) >= t.slots) return;
+                    if(!t.players) t.players={};
+                    t.players[currentUser.key] = { name: currentUser.username, uid: currentUser.key };
+                    t.joined = (t.joined||0)+1;
+                }
+                return t;
+            }, (e, c) => {
+                if(c) {
+                    db.ref('users/'+currentUser.key).update({balance: currentUser.balance-fee});
+                    db.ref('transactions/'+currentUser.key).push({type:'Join Match', amount:-fee, date: new Date().toISOString()});
+                    showToast("Joined!"); switchTab('my-matches');
+                } else showToast("Match Full or Error");
+            });
+        }
+
+        function loadMyMatches(uid) {
+            db.ref('tournaments').on('value', s => {
+                const list = document.getElementById('my-matches-list');
+                list.innerHTML = "";
+                const d = s.val() || {};
+                let found = false;
+                Object.keys(d).reverse().forEach(k => {
+                    const t = d[k];
+                    if(t.players && t.players[uid]) {
+                        found = true;
+                        let room = (t.room_id && t.room_pass) ? 
+                            `<div style="border:1px dashed cyan; padding:10px; margin-top:10px; color:cyan; border-radius:5px;">ID: ${t.room_id}<br>Pass: ${t.room_pass}</div>` : 
+                            `<div style="margin-top:10px; color:#666; font-size:0.8rem;">Room info coming soon...</div>`;
+                        list.innerHTML += `<div class="card" style="border-color:var(--accent);"><h4>${t.title}</h4>${room}</div>`;
+                    }
+                });
+                if(!found) list.innerHTML = "<p style='text-align:center; padding:20px; color:#666'>No matches joined.</p>";
+            });
+        }
+
+        // --- WALLET & TRANSACTIONS ---
+        function loadTxn(uid) {
+            db.ref('transactions/'+uid).limitToLast(10).on('value', s => {
+                const list = document.getElementById('txn-list');
+                list.innerHTML = "";
+                const arr=[]; s.forEach(c=>arr.push(c.val()));
+                arr.reverse().forEach(t => {
+                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333;">
+                        <span>${t.type}</span><span style="color:${t.amount>0?'#0f0':'#f00'}">${t.amount>0?'+':''}${t.amount}</span></div>`;
+                });
+            });
+        }
+
+        // --- DEPOSIT & WITHDRAW LOGIC (WITH LIMITS) ---
+        function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); }
+        function copyUPI() { navigator.clipboard.writeText(settings.upi_id || ""); showToast("UPI Copied"); }
+        
+        function submitDeposit() {
+            const amt = parseInt(document.getElementById('dep-amt').value);
+            const txn = document.getElementById('dep-txn').value;
+            const min = settings.min_deposit || 10;
+            
+            if(!amt || amt < min) return showToast(`Minimum Deposit: ₹${min}`);
+            if(!txn) return showToast("Enter Transaction ID");
+
+            db.ref('deposits').push({
+                uid: currentUser.key, username: currentUser.username,
+                amount: amt, txn_id: txn, status: 'pending', date: new Date().toISOString()
+            });
+            showToast("Request Sent!"); closeModal('deposit-modal');
+        }
+
+        function openWithdrawModal() { document.getElementById('withdraw-modal').classList.remove('hidden'); }
+        
+        function submitWithdraw() {
+            const amt = parseInt(document.getElementById('with-amt').value);
+            const num = document.getElementById('with-num').value;
+            const met = document.getElementById('with-method').value;
+            const min = settings.min_withdraw || 50;
+
+            if(!amt || amt < min) return showToast(`Minimum Withdraw: ₹${min}`);
+            if(amt > currentUser.balance) return showToast("Insufficient Balance");
+            if(!num) return showToast("Enter Payment Number");
+
+            // Deduct immediately
+            db.ref('users/'+currentUser.key).update({balance: currentUser.balance - amt});
+            // Push request
+            db.ref('withdraws').push({
+                uid: currentUser.key, username: currentUser.username,
+                amount: amt, number: num, method: met, status: 'pending', date: new Date().toISOString()
+            });
+            // Log transaction
+            db.ref('transactions/'+currentUser.key).push({type:'Withdraw Req', amount: -amt, date: new Date().toISOString()});
+            
+            showToast("Withdraw Pending"); closeModal('withdraw-modal');
+        }
+
+        function openSupport() { if(settings.support) window.open(settings.support); else showToast("Link not set"); }
+
+        // --- UI UTILS ---
+        function switchTab(t) {
+            document.querySelectorAll('section').forEach(e=>e.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.remove('hidden');
+            const idx = ['home','my-matches','wallet','profile'].indexOf(t);
+            if(idx>-1) document.querySelectorAll('.nav-item')[idx].classList.add('active');
+        }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function showToast(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+    </script>
+</body>
+</html>
